@@ -1,6 +1,6 @@
 //https://github.com/surajgupta-code/Tech.Tinder.git
 //TechTinder       password:8qH0pz9CzW5yRUpi
-// mongodb+srv://TechTinder:8qH0pz9CzW5yRUpi@techtinder.pphom.mongodb.net/
+// mongodb+srv://TechTinder:namasteNode@techtinder.r3e9c.mongodb.net/UserDATA
 
 const express = require('express');
 const app = express();
@@ -22,6 +22,66 @@ app.post('/signup', async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
+
+// Get the user by emailid
+app.get('/user', async (req, res) =>{
+  const userEmail = req.body.email;
+  try {
+      const users = await User.find({email: userEmail});
+      if(users.length > 0){
+        res.status(200).send(users);
+      } else {
+        res.status(404).send("User not found");
+      }
+  } 
+  catch (error) {
+    res.status(400).send("  Error");
+  }
+});
+
+// Feed Api
+app.get('/feed', async (req, res) =>{
+  try {
+    const users = await User.find();
+    res.status(200).send(users);
+  } catch (error) {
+    res.status(400).send("Error");
+  }
+});
+
+app.delete('/delete', async (req, res) => {
+  const userId = req.body.userId;
+  try {
+    const user = await User.findByIdAndDelete(userId);
+    if(user){
+      res.status(200).send("User deleted successfully");
+    } else {
+      res.status(404).send("User not found");
+    }
+  } catch (error) {
+    res.status(400).send("Error");
+  }
+}
+)
+
+app.patch('/update', async (req, res) => {
+  console.log("Request received:", req.body);  // ✅ Debugging: Log incoming request data
+
+  const userId = req.body.userId;  // ✅ Extracting userId from request body
+  const updateData = req.body;  // ✅ Extracting update data
+  
+  try {
+    await User.findByIdAndUpdate(userId, updateData, { new: true });  // ✅ Fixed syntax: Directly using userId
+
+    res.status(200).send("User updated successfully");  // ✅ Send success response
+  } catch (error) {
+    console.error("Error updating user:", error);  // ✅ Debugging: Log error details
+    res.status(400).send(error.message);  // ✅ Send actual error message instead of a generic one
+  }
+});
+
+
+
 
 // Connect to the database and start the server
 connectDB()
