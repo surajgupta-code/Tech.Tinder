@@ -65,23 +65,44 @@ app.delete('/delete', async (req, res) => {
 )
 
 app.patch('/update', async (req, res) => {
-  console.log("Request received:", req.body);  // ✅ Debugging: Log incoming request data
+  console.log("Request received:", req.body);
+  const { userId, ...updates } = req.body; // ✅ Separate userId from update data
+  const allowedUpdates = ['firstName', 'lastName', 'password', 'skills', 'gender'];
 
-  const userId = req.body.userId;  // ✅ Extracting userId from request body
-  const updateData = req.body;  // ✅ Extracting update data
-  
+  // ✅ Filter out only allowed fields
+  const filteredUpdates = Object.keys(updates)
+    .filter((key) => allowedUpdates.includes(key))
+    .reduce((obj, key) => {
+      obj[key] = updates[key];
+      return obj;
+    }, {});
+
+  // ✅ If no valid updates, reject request
+  if (Object.keys(filteredUpdates).length === 0) {
+    return res.status(400).send("Invalid updates! No valid fields provided.");
+  }
+
+  // ✅ Check if skills is an array and its length is within limits
+  if (updates.skills && (!Array.isArray(updates.skills) || updates.skills.length > 10)) {
+    return res.status(400).send("Skills should be an array with a maximum of 10 skills.");
+  }
+
   try {
-    await User.findByIdAndUpdate(userId, updateData, { new: true });  // ✅ Fixed syntax: Directly using userId
+    const updatedUser = await User.findByIdAndUpdate(userId, filteredUpdates, {
+      new: true, // ✅ Return updated document
+      runValidators: true // ✅ Ensure Mongoose validation runs
+    });
 
-    res.status(200).send("User updated successfully");  // ✅ Send success response
+    if (!updatedUser) {
+      return res.status(404).send("User not found");
+    }
+
+    res.status(200).send("User updated successfully");
   } catch (error) {
-    console.error("Error updating user:", error);  // ✅ Debugging: Log error details
-    res.status(400).send(error.message);  // ✅ Send actual error message instead of a generic one
+    console.error("Error updating user:", error);
+    res.status(400).send(error.message);
   }
 });
-
-
-
 
 // Connect to the database and start the server
 connectDB()
