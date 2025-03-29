@@ -1,31 +1,72 @@
 //https://github.com/surajgupta-code/Tech.Tinder.git
 //TechTinder       password:8qH0pz9CzW5yRUpi
-// mongodb+srv://TechTinder:namasteNode@techtinder.r3e9c.mongodb.net/UserDATA
+//'mongodb+srv://NamasteNode:TechTinder@tech.syotinb.mongodb.net/database
 
 const express = require('express');
 const app = express();
 const connectDB = require('./config/database'); // Import database connection
 const User = require('./models/user'); // Import User model
-
+const { validateSignupData } = require('../utils/validation'); // Import validation function
+const bcrypt = require('bcrypt');
+const cookieParser = require('cookie-parser');
 // Middleware to parse JSON requests
 app.use(express.json());
+app.use(cookieParser());
 
 app.post('/signup', async (req, res) => {
   
-  const user = new User(req.body);
-  
   try {  
+    validateSignupData(req); // ✅ Validate user data
+    const {firstName, lastName, email, password} = req.body;
+    
+    const hashedPassword = await bcrypt.hash(password, 10); // ✅ Hash the password
+
+    const user = new User({ firstName, lastName, email, password: hashedPassword }); // ✅ Create new
+
+
     await user.save();
     res.status(201).send("User created successfully");
   } catch (error) {
     console.error("Error creating user:", error);
-    res.status(500).send("Internal Server Error");
+    res.status(500).send("Something went wrong, Error: "  +  error.message);
   }
 });
+
+//Login Api
+app.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    console.log("User Found:", user);
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    console.log("Entered Password:", password);
+    console.log("Stored Hashed Password:", user.password);
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    console.log("Password Match Result:", isPasswordValid);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    res.status(200).json({ message: "Login Successful!!!" });
+  } catch (err) {
+    console.error("Login Error:", err);
+    res.status(500).json({ message: "Something went wrong. Please try again." });
+  }
+});
+
+
 
 // Get the user by emailid
 app.get('/user', async (req, res) =>{
   const userEmail = req.body.email;
+  
+
   try {
       const users = await User.find({email: userEmail});
       if(users.length > 0){
