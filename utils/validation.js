@@ -12,4 +12,11 @@ const validateSignupData = (req) =>{
         throw new Error('Password is weak');
     }
 }
-module.exports = {validateSignupData};
+
+const validateEditProfileData = (body) => {
+    const allowedFields = ['firstName', 'lastName', 'password', 'photoURL', 'about', 'skills'];
+    return Object.keys(body).every(field => allowedFields.includes(field));
+  };
+  
+
+module.exports = {validateSignupData, validateEditProfileData};
