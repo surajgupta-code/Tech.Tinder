@@ -7,8 +7,7 @@ const app = express();
 const connectDB = require('./config/database'); // Import database connection
 const cookieParser = require('cookie-parser');
 const  userAuth  = require('./middleware/auth'); // Import authentication middleware
-
-// Middleware to parse JSON requests
+const  userRouter =  require("./routes/userRt");
 
 app.use(express.json());
 app.use(cookieParser());
@@ -20,7 +19,7 @@ const requestRouter = require('./routes/request'); // Import request routes
 app.use('/', authRouter); // Use authentication routes
 app.use('/', profileRouter); // Use profile routes
 app.use('/', requestRouter); // Use request routes
-
+app.use('/', userRouter);
 // Connect to the database and start the server
 connectDB()
   .then(() => {
